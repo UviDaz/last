@@ -1,0 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fabric.js Text Display</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/4.5.0/fabric.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href='http://fonts.googleapis.com/css?family=Oswald|Lobster|Fontdiner+Swanky|Crafty+Girls|Pacifico|Satisfy|Gloria+Hallelujah|Bangers|Audiowide|Sacramento' rel='stylesheet' type='text/css'>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar, .tools {
+            width: 80px;
+            background-color: #333;
+            color: white;
+            overflow-y: auto;
+            padding: 10px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .button-group, .controls-group {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .button-group button, .controls-group button {
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 5px;
+            background-color: #444;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+        }
+        .button-group button:hover, .controls-group button:hover {
+            background-color: #555;
+        }
+        .controls-group input, .controls-group select {
+            width: calc(100% - 20px);
+            padding: 5px;
+            margin-bottom: 5px;
+            border: none;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .controls-group .color-picker {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .controls-group .dropdown-content span {
+            cursor: pointer;
+        }
+        .controls-group {
+            background-color: #444;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #canvas-container {
+            border: 1px solid #000;
+            border-radius: 8px;
+            background-color: white;
+        }
+        .sidebar, .tools {
+            height: 100%;
+            position: fixed;
+        }
+        .sidebar {
+            left: 0;
+        }
+        .tools {
+            right: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="controls-group">
+            <button id="addNewLine" title="Add New Line"><i class="fas fa-plus"></i></button>
+            <button id="addTextBox" title="Add Text Box"><i class="fas fa-edit"></i></button>
+            <button id="generateApiUrl" title="Generate API URL"><i class="fas fa-link"></i></button>
+        </div>
+        <div class="controls-group">
+            <input type="color" id="textColorPicker" class="color-picker" title="Text Color">
+            <input type="number" id="strokeSize" value="1" min="0" step="1" title="Stroke Size">
+            <input type="color" id="strokeColor" value="#000000" class="color-picker" title="Stroke Color">
+            <button id="setTextStroke" title="Set Text Stroke"><i class="fas fa-pen-alt"></i></button>
+            <button id="deleteTextStroke" title="Delete Text Stroke"><i class="fas fa-eraser"></i></button>
+        </div>
+        <div class="controls-group">
+            <input type="color" id="shadowColor" value="#000000" class="color-picker" title="Shadow Color">
+            <input type="number" id="shadowOffsetX" value="0" step="1" title="Shadow Offset X">
+            <input type="number" id="shadowOffsetY" value="0" step="1" title="Shadow Offset Y">
+            <input type="number" id="shadowBlur" value="0" step="1" title="Shadow Blur">
+            <button id="setTextShadow" title="Set Text Shadow"><i class="fas fa-eye-dropper"></i></button>
+            <button id="deleteTextShadow" title="Delete Text Shadow"><i class="fas fa-eraser"></i></button>
+        </div>
+        <div class="controls-group">
+            <div class="dropdown">
+                <button class="dropbtn" title="Text Alignment"><i class="fas fa-align-left"></i></button>
+                <div class="dropdown-content">
+                    <span onclick="setTextAlignment('left')">L</span>
+                    <span onclick="setTextAlignment('center')">C</span>
+                    <span onclick="setTextAlignment('right')">R</span>
+                </div>
+            </div>
+        </div>
+        <div class="controls-group">
+            <div class="dropdown">
+                <button class="dropbtn" title="Change Font" style="width: 100%;"><i class="fas fa-font"></i></button>
+                <div class="dropdown-content">
+                    <span style="font-family:Oswald" onclick="changeFontFamily('Oswald')">Oswald</span>
+                    <span style="font-family:Lobster" onclick="changeFontFamily('Lobster')">Lobster</span>
+                    <span style="font-family:Fontdiner+Swanky" onclick="changeFontFamily('Fontdiner Swanky')">Fontdiner Swanky</span>
+                    <span style="font-family:Crafty+Girls" onclick="changeFontFamily('Crafty Girls')">Crafty Girls</span>
+                    <span style="font-family:Pacifico" onclick="changeFontFamily('Pacifico')">Pacifico</span>
+                    <span style="font-family:Satisfy" onclick="changeFontFamily('Satisfy')">Satisfy</span>
+                    <span style="font-family:Gloria+Hallelujah" onclick="changeFontFamily('Gloria Hallelujah')">Gloria Hallelujah</span>
+                    <span style="font-family:Bangers" onclick="changeFontFamily('Bangers')">Bangers</span>
+                    <span style="font-family:Audiowide" onclick="changeFontFamily('Audiowide')">Audiowide</span>
+                    <span style="font-family:Sacramento" onclick="changeFontFamily('Sacramento')">Sacramento</span>
+                </div>
+            </div>
+        </div>
+        <div class="controls-group">
+            <label for="fontSizeSlider" style="color: white;">Font Size</label>
+            <input type="range" id="fontSizeSlider" min="10" max="100" step="1" value="24" title="Font Size">
+            <input type="number" id="fontSizeInput" min="10" max="100" step="1" value="24" title="Font Size" style="width: 60px;">
+        </div>
+        <div class="controls-group">
+            <button id="saveTemplateToDatabase" title="Save Template to Supabase"><i class="fas fa-save"></i></button>
+            <button id="loadTemplateFromDatabase" title="Load Template from Supabase"><i class="fas fa-upload"></i></button>
+            <button id="deleteTemplateFromDatabase" title="Delete Template from Supabase"><i class="fas fa-trash"></i></button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div id="canvas-container">
+            <canvas id="c"></canvas>
+        </div>
+        <div id="inputContainer">
+            <input type="text" class="textInput text-input" placeholder="Enter your text here">
+        </div>
+    </div>
+
+    <div class="tools">
+        <div class="controls-group">
+            <input type="number" id="canvasWidth" value="600" title="Canvas Width">
+            <input type="number" id="canvasHeight" value="400" title="Canvas Height">
+            <button id="setCanvasSize" title="Set Canvas Size"><i class="fas fa-expand"></i></button>
+            <input type="color" id="backgroundColorPicker" class="color-picker" title="Background Color">
+            <button id="setBackgroundColor" title="Set Background Color"><i class="fas fa-fill-drip"></i></button>
+        </div>
+        <div class="controls-group">
+            <button id="saveTemplate" title="Save Template"><i class="fas fa-save"></i></button>
+            <input type="file" id="uploadJson" accept=".json" style="display:none;">
+            <button id="uploadTemplate" title="Upload Template"><i class="fas fa-upload"></i></button>
+            <button id="saveImage" title="Save Image"><i class="fas fa-image"></i></button>
+        </div>
+        <div class="controls-group">
+            <button id="uploadSvgUrl" title="Upload SVG from URL"><i class="fas fa-upload"></i></button>
+            <input type="file" id="uploadSvgFile" accept=".svg" style="display:none;">
+            <button id="uploadSvgLocal" title="Upload SVG from Local"><i class="fas fa-upload"></i></button>
+            <button id="uploadPngUrl" title="Upload PNG from URL"><i class="fas fa-upload"></i></button>
+            <input type="file" id="uploadPngFile" accept=".png,.jpg,.jpeg" style="display:none;">
+            <button id="uploadPngLocal" title="Upload PNG from Local"><i class="fas fa-upload"></i></button>
+            <button id="addCircleMask" title="Add Circle Mask"><i class="fas fa-circle"></i></button>
+            <button id="addRectangleMask" title="Add Rectangle Mask"><i class="fas fa-square"></i></button>
+            <button id="replaceImageButton" title="Replace Image"><i class="fas fa-sync"></i></button>
+        </div>
+        <div class="controls-group">
+            <input type="number" id="zoomFactorInput" value="1" step="0.1" min="0.1" title="Zoom Factor">
+            <button id="setZoomFactor" title="Set Zoom Factor"><i class="fas fa-search-plus"></i></button>
+        </div>
+        <div class="controls-group">
+            <input type="number" id="shapeSizeInput" value="200" title="Shape Size">
+            <button id="setShapeSize" title="Set Shape Size"><i class="fas fa-arrows-alt"></i></button>
+        </div>
+        <div class="controls-group">
+            <button id="deleteObject" title="Delete Selected Object"><i class="fas fa-trash"></i></button>
+            <button id="sendToFront" title="Send to Front"><i class="fas fa-angle-double-up"></i></button>
+            <button id="sendToBack" title="Send to Back"><i class="fas fa-angle-double-down"></i></button>
+        </div>
+        <div class="controls-group">
+            <button id="alignCenterHorizontally" title="Align Center Horizontally"><i class="fas fa-arrows-alt-h"></i></button>
+            <button id="alignCenterVertically" title="Align Center Vertically"><i class="fas fa-arrows-alt-v"></i></button>
+            <button id="equalVerticalSpacing" title="Equal Vertical Spacing"><i class="fas fa-grip-lines-vertical"></i></button>
+            <button id="equalHorizontalSpacing" title="Equal Horizontal Spacing"><i class="fas fa-grip-lines"></i></button>
+            <button id="undo" title="Undo"><i class="fas fa-undo"></i></button>
+            <button id="redo" title="Redo"><i class="fas fa-redo"></i></button>
+        </div>
+    </div>
+
+    <script>
+    // Initialize Fabric.js canvas
+    var canvas = new fabric.Canvas('c', {
+        width: 600,
+        height: 400
+    });
+    var inputCount = 1;  // To keep track of inputs
+    var shapeSize = 200; // Fixed shape size for both circle and rectangle
+    var ZoomFactor = 1; // Default zoom factor
+
+    var state = [];
+    var currentStateIndex = -1;
+
+    // Function to save the state of the canvas
+    function saveState() {
+        const json = JSON.stringify(canvas);
+        if (currentStateIndex < state.length - 1) {
+            state = state.slice(0, currentStateIndex + 1);
+        }
+        state.push(json);
+        currentStateIndex++;
+    }
+
+    // Function to undo the last action
+    function undo() {
+        if (currentStateIndex > 0) {
+            currentStateIndex--;
+            const previousState = state[currentStateIndex];
+            canvas.clear();
+            canvas.loadFromJSON(previousState, function() {
+                canvas.renderAll();
+            });
+        }
+    }
+
+    // Function to redo the last undone action
+    function redo() {
+        if (currentStateIndex < state.length - 1) {
+            currentStateIndex++;
+            const nextState = state[currentStateIndex];
+            canvas.clear();
+            canvas.loadFromJSON(nextState, function() {
+                canvas.renderAll();
+            });
+        }
+    }
+
+    // Save the initial state
+    saveState();
+
+    // Function to update the shape size from user input
+    function updateShapeSize() {
+        var userShapeSize = parseInt(document.getElementById('shapeSizeInput').value, 10);
+        shapeSize = isNaN(userShapeSize) ? 200 : userShapeSize;
+    }
+
+    // Function to update the ZoomFactor from user input
+    function updateZoomFactor() {
+        var userZoomFactor = parseFloat(document.getElementById('zoomFactorInput').value);
+        ZoomFactor = isNaN(userZoomFactor) ? 1 : userZoomFactor;
+    }
+
+    // Function to update the canvas text in real-time
+    function updateCanvasText(event) {
+        var inputElement = $(event.target);
+        var textId = inputElement.data('textId');
+        var fabricText = canvas.getObjects().find(obj => obj.id === textId);
+        if (fabricText) {
+            fabricText.set({ text: inputElement.val() });
+            canvas.renderAll();
+            saveState();
+        }
+    }
+
+    // Function to add new text input and corresponding text on canvas
+    function addNewInput() {
+        inputCount++;
+        var newInput = $('<input>', {
+            type: 'text',
+            class: 'textInput text-input',
+            placeholder: 'Enter your text here',
+            data: { textId: 'text' + inputCount }
+        });
+
+        $('#inputContainer').append(newInput);
+
+        var text = new fabric.Text('', {
+            left: 100,
+            top: 100 + (inputCount - 1) * 30,
+            fontSize: 24,
+            id: 'text' + inputCount
+        });
+        canvas.add(text);
+        saveState();
+    }
+
+    function addTextBox() {
+    var textBox = new fabric.Textbox('Edit text', {
+        left: 100,
+        top: 100 + inputCount * 30,
+        width: 200,
+        fontSize: 24,
+        id: 'textbox' + inputCount,
+        lockScalingFlip: true,  // Prevent flipping while scaling
+    });
+    
+    // Add the textBox to the canvas
+    canvas.add(textBox);
+    inputCount++;
+    canvas.setActiveObject(textBox);
+    canvas.renderAll();
+    saveState();
+    
+    // Attach an event listener to keep the font size constant during scaling
+    textBox.on('scaling', function() {
+        // Calculate the scale factor
+        var scaleX = textBox.scaleX;
+        var scaleY = textBox.scaleY;
+
+        // Adjust the font size based on the scale factor
+        textBox.fontSize = textBox.fontSize * scaleX;
+
+        // Reset the scale to 1 to prevent multiple scaling
+        textBox.scaleX = 1;
+        textBox.scaleY = 1;
+        
+        // Adjust the width of the textbox to the new size
+        textBox.set({
+            width: textBox.width * scaleX
+        });
+
+        canvas.renderAll();
+    });
+}
+
+    function setTextAlignment(alignment) {
+        var activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length) {
+            activeObjects.forEach(function(obj) {
+                if (obj.type === 'text' || obj.type === 'textbox') {
+                    obj.set({ textAlign: alignment });
+                    obj.setCoords();
+                }
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object to change its alignment.");
+        }
+    }
+
+    function generateApiUrl() {
+        var texts = canvas.getObjects('text').map(function(obj) {
+            return { id: obj.id, text: obj.text };
+        });
+
+        var images = canvas.getObjects('group').map(function(obj) {
+            var imageData = {};
+            obj.forEachObject(function(subObj) {
+                if (subObj.type === 'image') {
+                    imageData[obj.id] = subObj.getSrc();
+                }
+            });
+            return imageData;
+        });
+
+        var baseUrl = window.location.origin + '/generate-image';
+        var textParams = texts.map(text => `${text.id}=${encodeURIComponent(text.text)}`).join('&');
+        var imageParams = Object.entries(images).map(([id, src]) => `${id}=${encodeURIComponent(src)}`).join('&');
+
+        var apiUrl = `${baseUrl}?${textParams}&${imageParams}`;
+
+        $('#apiUrl').text(apiUrl);
+    }
+
+    // Function to save the current canvas as JSON, excluding styles
+    function saveTemplate() {
+    // Remove styles from all textbox objects
+    canvas.getObjects('textbox').forEach(textbox => {
+        delete textbox.styles;
+    });
+
+    var canvasJson = canvas.toJSON(['id', 'fontFamily', 'fontSize']);
+    var canvasSize = { width: canvas.width, height: canvas.height };
+    var templateData = {
+        canvas: canvasJson,
+        size: canvasSize
+    };
+    var blob = new Blob([JSON.stringify(templateData)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = "template.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+    // Function to upload a JSON template and load it onto the canvas, including canvas size
+    function uploadTemplate() {
+    var input = document.getElementById('uploadJson');
+    input.click();
+    input.onchange = function(event) {
+        var file = event.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var templateData = JSON.parse(e.target.result);
+            canvas.setWidth(templateData.size.width);
+            canvas.setHeight(templateData.size.height);
+            canvas.loadFromJSON(templateData.canvas, function() {
+                // Ensure that each text object has an id property and correct font properties
+                canvas.getObjects().forEach(function(obj, index) {
+                    if (obj.type === 'text' || obj.type === 'textbox') {
+                        if (!obj.id) {
+                            obj.id = 'text' + (index + 1);
+                        }
+                        // Set default font properties if they are missing
+                        obj.set({
+                            fontFamily: obj.fontFamily || 'Times New Roman',
+                            fontSize: obj.fontSize || 24
+                        });
+                        // Ensure styles are applied to all characters in the textbox
+                        if (obj.type === 'textbox') {
+                            var allSameFont = true;
+                            var defaultFontFamily = obj.fontFamily;
+                            var textLength = obj.text.length;
+                            for (var i = 0; i < textLength; i++) {
+                                var charStyle = obj.getSelectionStyles(i, i + 1);
+                                if (charStyle.fontFamily && charStyle.fontFamily !== defaultFontFamily) {
+                                    allSameFont = false;
+                                }
+                            }
+                            if (allSameFont) {
+                                obj.set('fontFamily', defaultFontFamily);
+                                obj.styles = {}; // Clear individual styles if all are the same
+                            }
+                        }
+                    }
+                });
+                canvas.renderAll();
+                saveState();
+            });
+        };
+        reader.readAsText(file);
+    };
+}
+
+    // Function to save the current canvas as a PNG image
+    function saveImage() {
+        var dataURL = canvas.toDataURL({
+            format: 'png'
+        });
+        var a = document.createElement('a');
+        a.href = dataURL;
+        a.download = 'canvas.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    // Function to set the canvas size
+    function setCanvasSize() {
+        var width = parseInt(document.getElementById('canvasWidth').value, 10);
+        var height = parseInt(document.getElementById('canvasHeight').value, 10);
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+        canvas.renderAll();
+        saveState();
+    }
+
+    // Function to set the canvas background color
+    function setBackgroundColor() {
+        var color = document.getElementById('backgroundColorPicker').value;
+        canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
+        saveState();
+    }
+
+    // Function to set the text color of the selected text object
+    function setTextColor() {
+        var color = document.getElementById('textColorPicker').value;
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            activeObject.set({ fill: color });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object to change its color.");
+        }
+    }
+
+    // Function to change the font family of the active text object or selected text inside a textbox
+    function changeFontFamily(fontFamily) {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            if (activeObject.type === 'textbox') {
+                var selectionStart = activeObject.selectionStart;
+                var selectionEnd = activeObject.selectionEnd;
+                if (selectionStart !== selectionEnd) {
+                    for (let i = selectionStart; i < selectionEnd; i++) {
+                        activeObject.setSelectionStyles({ fontFamily: fontFamily }, i, i + 1);
+                    }
+                } else {
+                    activeObject.set({ fontFamily: fontFamily });
+                }
+            } else {
+                activeObject.set("fontFamily", fontFamily);
+            }
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object or text inside a textbox to change its font.");
+        }
+    }
+
+    // Function to change the font size of the active text object or selected text inside a textbox
+    function changeFontSize(fontSize) {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            if (activeObject.type === 'textbox') {
+                var selectionStart = activeObject.selectionStart;
+                var selectionEnd = activeObject.selectionEnd;
+                if (selectionStart !== selectionEnd) {
+                    for (let i = selectionStart; i < selectionEnd; i++) {
+                        activeObject.setSelectionStyles({ fontSize: fontSize }, i, i + 1);
+                    }
+                } else {
+                    activeObject.set({ fontSize: fontSize });
+                }
+            } else {
+                activeObject.set({ fontSize: fontSize });
+            }
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object or text inside a textbox to change its font size.");
+        }
+    }
+
+    // Function to set the text stroke size and color
+    function setTextStroke() {
+        var strokeSize = parseInt(document.getElementById('strokeSize').value, 10);
+        var strokeColor = document.getElementById('strokeColor').value;
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            activeObject.set({
+                strokeWidth: strokeSize,
+                stroke: strokeColor,
+                paintFirst: 'stroke' // Ensures the stroke is applied outside the text
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object to set its stroke.");
+        }
+    }
+
+    // Function to delete the text stroke
+    function deleteTextStroke() {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            activeObject.set({
+                strokeWidth: 0,
+                stroke: ''
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object to delete its stroke.");
+        }
+    }
+
+    // Function to set the text shadow
+    function setTextShadow() {
+        var shadowColor = document.getElementById('shadowColor').value;
+        var shadowOffsetX = parseInt(document.getElementById('shadowOffsetX').value, 10);
+        var shadowOffsetY = parseInt(document.getElementById('shadowOffsetY').value, 10);
+        var shadowBlur = parseInt(document.getElementById('shadowBlur').value, 10);
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            activeObject.set('shadow', new fabric.Shadow({
+                color: shadowColor,
+                blur: shadowBlur,
+                offsetX: shadowOffsetX,
+                offsetY: shadowOffsetY
+            }));
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object to set its shadow.");
+        }
+    }
+
+    // Function to delete the text shadow
+    function deleteTextShadow() {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'text' || activeObject.type === 'textbox')) {
+            activeObject.set('shadow', null);
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select a text object to delete its shadow.");
+        }
+    }
+
+    // Function to delete the selected objects
+    function deleteObject() {
+        var activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length) {
+            activeObjects.forEach(function(object) {
+                canvas.remove(object);
+            });
+            canvas.discardActiveObject().renderAll();
+            saveState();
+        } else {
+            alert("Please select an object to delete.");
+        }
+    }
+
+    // Function to send the selected object to the front
+    function sendToFront() {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject) {
+            canvas.bringToFront(activeObject);
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select an object to send to the front.");
+        }
+    }
+
+    // Function to send the selected object to the back
+    function sendToBack() {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject) {
+            canvas.sendToBack(activeObject);
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select an object to send to the back.");
+        }
+    }
+
+    // Function to add an image with a circular or rectangular mask
+    function addImageWithMask(shape) {
+        var imageUrl = prompt("Enter the image URL:");
+        if (imageUrl) {
+            fabric.Image.fromURL(imageUrl, function(img) {
+                var mask;
+
+                if (shape === 'circle') {
+                    mask = new fabric.Circle({
+                        radius: shapeSize / 2,
+                        originX: 'center',
+                        originY: 'center'
+                    });
+                } else if (shape === 'rect') {
+                    mask = new fabric.Rect({
+                        width: shapeSize,
+                        height: shapeSize,
+                        originX: 'center',
+                        originY: 'center'
+                    });
+                }
+
+                // Calculate the scale factor to cover the entire shape
+                var scaleX = shapeSize / img.width;
+                var scaleY = shapeSize / img.height;
+                var scaleFactor = Math.max(scaleX, scaleY) * ZoomFactor;
+
+                img.scale(scaleFactor);
+                img.set({
+                    originX: 'center',
+                    originY: 'center'
+                });
+
+                var group = new fabric.Group([img], {
+                    left: 100,
+                    top: 100,
+                    clipPath: mask,
+                    originX: 'center',
+                    originY: 'center',
+                    id: `group_${Date.now()}`
+                });
+
+                canvas.add(group);
+                canvas.renderAll();
+                saveState();
+            });
+        }
+    }
+
+    // Function to replace the image within the selected group
+    function replaceImage() {
+        var activeObject = canvas.getActiveObject();
+        if (activeObject && activeObject.type === 'group') {
+            var imageUrl = prompt("Enter the new image URL:");
+            if (imageUrl) {
+                fabric.Image.fromURL(imageUrl, function(img) {
+                    var group = activeObject;
+                    var mask = group.clipPath;
+
+                    // Capture the current properties of the mask
+                    var left = mask.left;
+                    var top = mask.top;
+                    var scaleX = mask.scaleX || 1;
+                    var scaleY = mask.scaleY || 1;
+                    var originX = mask.originX;
+                    var originY = mask.originY;
+
+                    // Calculate the scale factor to cover the entire shape
+                    var imgScaleX = mask.width * scaleX / img.width;
+                    var imgScaleY = mask.height * scaleY / img.height;
+                    var imgScaleFactor = Math.max(imgScaleX, imgScaleY) * ZoomFactor;
+
+                    img.scale(imgScaleFactor);
+                    img.set({
+                        left: left,
+                        top: top,
+                        originX: originX,
+                        originY: originY
+                    });
+
+                    // Replace the old image with the new one
+                    group.remove(group.item(0));
+                    group.insertAt(img, 0);
+
+                    // Ensure the mask remains in the correct position
+                    group.clipPath = mask;
+
+                    // Reapply the group's properties
+                    group.set({
+                        left: group.left,
+                        top: group.top,
+                        angle: group.angle,
+                        scaleX: group.scaleX,
+                        scaleY: group.scaleY,
+                        originX: group.originX,
+                        originY: group.originY
+                    });
+
+                    // Force re-rendering
+                    canvas.requestRenderAll();
+                    saveState();
+                });
+            }
+        } else {
+            alert("Please select a masked image group to replace the image.");
+        }
+    }
+
+    // Function to upload SVG from URL
+    function uploadSvgFromUrl() {
+        var url = prompt("Enter the SVG URL:");
+        if (url) {
+            fabric.loadSVGFromURL(url, function(objects, options) {
+                var obj = fabric.util.groupSVGElements(objects, options);
+                canvas.add(obj).renderAll();
+                saveState();
+            });
+        }
+    }
+
+    // Function to upload SVG from local file
+    function uploadSvgFromFile(event) {
+        var file = event.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                fabric.loadSVGFromString(e.target.result, function(objects, options) {
+                    var obj = fabric.util.groupSVGElements(objects, options);
+                    canvas.add(obj).renderAll();
+                    saveState();
+                });
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    // Function to upload PNG from URL
+    function uploadPngFromUrl() {
+        var url = prompt("Enter the PNG URL:");
+        if (url) {
+            fabric.Image.fromURL(url, function(img) {
+                canvas.add(img).renderAll();
+                saveState();
+            });
+        }
+    }
+
+    // Function to upload PNG from local file
+    function uploadPngFromFile(event) {
+        var file = event.target.files[0];
+        if (file) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                fabric.Image.fromURL(e.target.result, function(img) {
+                    canvas.add(img).renderAll();
+                    saveState();
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+
+    // Function to center objects horizontally
+    function centerObjectsHorizontally() {
+        var activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length) {
+            var canvasWidth = canvas.getWidth();
+            activeObjects.forEach(function(obj) {
+                obj.set('left', (canvasWidth - obj.getScaledWidth()) / 2);
+                obj.setCoords();
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select objects to align.");
+        }
+    }
+
+    // Function to center objects vertically
+    function centerObjectsVertically() {
+        var activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length) {
+            var canvasHeight = canvas.getHeight();
+            activeObjects.forEach(function(obj) {
+                obj.set('top', (canvasHeight - obj.getScaledHeight()) / 2);
+                obj.setCoords();
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select objects to align.");
+        }
+    }
+
+    // Function to arrange objects with equal vertical spacing within selected area
+    function arrangeEqualVerticalSpacing() {
+        var activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length > 1) {
+            // Get the bounding box of the selected objects
+            var boundingBox = getBoundingBox(activeObjects);
+            var totalHeight = activeObjects.reduce((sum, obj) => sum + obj.getScaledHeight(), 0);
+            var spacing = (boundingBox.height - totalHeight) / (activeObjects.length - 1);
+
+            var currentTop = boundingBox.top;
+            activeObjects.forEach(function(obj, index) {
+                if (index > 0) {
+                    currentTop += activeObjects[index - 1].getScaledHeight() + spacing;
+                }
+                obj.set('top', currentTop);
+                obj.setCoords();
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select at least two objects to arrange.");
+        }
+    }
+
+    // Function to arrange objects with equal horizontal spacing within selected area
+    function arrangeEqualHorizontalSpacing() {
+        var activeObjects = canvas.getActiveObjects();
+        if (activeObjects.length > 1) {
+            // Get the bounding box of the selected objects
+            var boundingBox = getBoundingBox(activeObjects);
+            var totalWidth = activeObjects.reduce((sum, obj) => sum + obj.getScaledWidth(), 0);
+            var spacing = (boundingBox.width - totalWidth) / (activeObjects.length - 1);
+
+            var currentLeft = boundingBox.left;
+            activeObjects.forEach(function(obj, index) {
+                if (index > 0) {
+                    currentLeft += activeObjects[index - 1].getScaledWidth() + spacing;
+                }
+                obj.set('left', currentLeft);
+                obj.setCoords();
+            });
+            canvas.renderAll();
+            saveState();
+        } else {
+            alert("Please select at least two objects to arrange.");
+        }
+    }
+
+    // Function to get the bounding box of a set of objects
+    function getBoundingBox(objects) {
+        var minLeft = Math.min(...objects.map(obj => obj.left));
+        var maxLeft = Math.max(...objects.map(obj => obj.left + obj.getScaledWidth()));
+        var minTop = Math.min(...objects.map(obj => obj.top));
+        var maxTop = Math.max(...objects.map(obj => obj.top + obj.getScaledHeight()));
+
+        return {
+            left: minLeft,
+            top: minTop,
+            width: maxLeft - minLeft,
+            height: maxTop - minTop
+        };
+    }
+
+    // Bind the initial input to a fabric text object
+    $(document).ready(function() {
+        $('.textInput').data('textId', 'text1');
+        var initialText = new fabric.Text('', {
+            left: 100,
+            top: 100,
+            fontSize: 24,
+            id: 'text1'
+        });
+        canvas.add(initialText);
+
+        // Event listener for typing telemetry
+        $('#inputContainer').on('input', '.textInput', updateCanvasText);
+
+        // Event listener for adding new inputs
+        $('#addNewLine').click(addNewInput);
+
+        // Event listener for adding new text box
+        $('#addTextBox').click(addTextBox);
+
+        // Event listener for generating API URL
+        $('#generateApiUrl').click(generateApiUrl);
+
+        // Event listener for saving template as JSON
+        $('#saveTemplate').click(saveTemplate);
+
+        // Event listener for uploading JSON template
+        $('#uploadTemplate').click(uploadTemplate);
+
+        // Event listener for saving image as PNG
+        $('#saveImage').click(saveImage);
+
+        // Event listener for setting canvas size
+        $('#setCanvasSize').click(setCanvasSize);
+
+        // Event listener for setting background color
+        $('#setBackgroundColor').click(setBackgroundColor);
+
+        // Event listener for setting text color
+        $('#textColorPicker').change(setTextColor);
+
+        // Event listeners for changing text font
+        $('#addCircleMask').click(function() {
+            addImageWithMask('circle');
+        });
+        $('#addRectangleMask').click(function() {
+            addImageWithMask('rect');
+        });
+
+        // Event listener for replacing image
+        $('#replaceImageButton').click(replaceImage);
+
+        // Event listener for updating the zoom factor
+        $('#setZoomFactor').click(updateZoomFactor);
+
+        // Event listener for updating the shape size
+        $('#setShapeSize').click(updateShapeSize);
+
+        // Event listener for setting text stroke
+        $('#setTextStroke').click(setTextStroke);
+
+        // Event listener for deleting text stroke
+        $('#deleteTextStroke').click(deleteTextStroke);
+
+        // Event listener for setting text shadow
+        $('#setTextShadow').click(setTextShadow);
+
+        // Event listener for deleting text shadow
+        $('#deleteTextShadow').click(deleteTextShadow);
+
+        // Event listener for deleting the selected object(s)
+        $('#deleteObject').click(deleteObject);
+
+        // Event listener for sending the selected object to the front
+        $('#sendToFront').click(sendToFront);
+
+        // Event listener for sending the selected object to the back
+        $('#sendToBack').click(sendToBack);
+
+        // Event listener for uploading SVG from URL
+        $('#uploadSvgUrl').click(uploadSvgFromUrl);
+
+        // Event listener for uploading SVG from local file
+        $('#uploadSvgLocal').click(function() {
+            $('#uploadSvgFile').click();
+        });
+        $('#uploadSvgFile').change(uploadSvgFromFile);
+
+        // Event listener for uploading PNG from URL
+        $('#uploadPngUrl').click(uploadPngFromUrl);
+
+        // Event listener for uploading PNG from local file
+        $('#uploadPngLocal').click(function() {
+            $('#uploadPngFile').click();
+        });
+        $('#uploadPngFile').change(uploadPngFromFile);
+
+        // Event listener for changing text alignment
+        $('.dropdown-content span').click(function() {
+            var alignment = $(this).text().toLowerCase();
+            if (alignment === 'l') alignment = 'left';
+            if (alignment === 'c') alignment = 'center';
+            if (alignment === 'r') alignment = 'right';
+            setTextAlignment(alignment);
+        });
+
+        // Event listeners for horizontal and vertical alignment
+        $('#alignCenterHorizontally').click(centerObjectsHorizontally);
+        $('#alignCenterVertically').click(centerObjectsVertically);
+        $('#equalVerticalSpacing').click(arrangeEqualVerticalSpacing);
+        $('#equalHorizontalSpacing').click(arrangeEqualHorizontalSpacing);
+
+        // Event listeners for undo and redo actions
+        $('#undo').click(undo);
+        $('#redo').click(redo);
+
+        // Event listener for font size change via slider or input
+        $('#fontSizeSlider').on('input', function() {
+            var fontSize = $(this).val();
+            $('#fontSizeInput').val(fontSize);
+            changeFontSize(parseInt(fontSize, 10));
+        });
+
+        $('#fontSizeInput').on('input', function() {
+            var fontSize = $(this).val();
+            $('#fontSizeSlider').val(fontSize);
+            changeFontSize(parseInt(fontSize, 10));
+        });
+
+        // Keyboard event listener for the delete key
+        $(document).keydown(function(e) {
+            if (e.key === "Delete") {
+                deleteObject();
+            }
+        });
+    });
+
+    // Function to initialize Supabase and handle interactions
+    function initializeSupabase() {
+        const supabaseUrl = 'https://fzwlosptjmikjnvslxgi.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6d2xvc3B0am1pa2pudnNseGdpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTcyODY0MzksImV4cCI6MjAzMjg2MjQzOX0.3-T6SfrbMoTmqqj5pRZxU1LEQcwU-VlFWP8lzQAc_c8';
+        
+        if (!supabaseUrl || !supabaseKey) {
+            alert('Please provide Supabase URL and Key.');
+            return null;
+        }
+
+        return window.supabase.createClient(supabaseUrl, supabaseKey);
+    }
+
+    // Supabase related functionality
+    $(document).ready(function() {
+        var supabase = initializeSupabase();
+
+        if (!supabase) {
+            // Show a message to the user if credentials are missing and disable related buttons
+            $('.controls-group button[title*="Supabase"]').click(function() {
+                alert('Supabase credentials are missing. Please provide Supabase URL and Key.');
+            });
+            return;
+        }
+
+        // Function to save the current canvas as JSON to Supabase
+        async function saveTemplateToDatabase() {
+            var templateName = prompt("Enter a template name:");
+            if (!templateName) {
+                alert("Template name is required!");
+                return;
+            }
+            var canvasJson = canvas.toJSON(['id', 'fontFamily', 'fontSize']);
+            var canvasSize = { width: canvas.width, height: canvas.height };
+            var templateData = {
+                canvas: canvasJson,
+                size: canvasSize,
+                time_saved: new Date().toISOString()
+            };
+
+            // Save template data to Supabase
+            const { data, error } = await supabase
+                .from('templates')
+                .insert([{ name: templateName, template: templateData, time_saved: new Date().toISOString() }]);
+
+            if (error) {
+                console.error('Error saving template:', error);
+                alert('Error saving template: ' + error.message);
+            } else {
+                alert('Template saved successfully');
+            }
+        }
+
+        // Function to load a JSON template from Supabase
+        async function loadTemplateFromDatabase() {
+            var templateName = prompt("Enter the template name:");
+            if (templateName) {
+                const { data, error } = await supabase
+                    .from('templates')
+                    .select('template')
+                    .eq('name', templateName)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching template:', error);
+                    alert('Error fetching template: ' + error.message);
+                    return;
+                }
+
+                if (data) {
+                    var templateData = data.template;
+                    canvas.setWidth(templateData.size.width);
+                    canvas.setHeight(templateData.size.height);
+                    canvas.loadFromJSON(templateData.canvas, function() {
+                        canvas.renderAll();
+                        saveState();
+                    });
+                } else {
+                    alert('No such template!');
+                }
+            }
+        }
+
+        // Function to delete a template from Supabase
+        async function deleteTemplateFromDatabase() {
+            var templateName = prompt("Enter the template name to delete:");
+            if (templateName) {
+                var confirmDeletion = confirm("Are you sure you want to delete the template: " + templateName + "?");
+                if (confirmDeletion) {
+                    const { data, error } = await supabase
+                        .from('templates')
+                        .delete()
+                        .eq('name', templateName);
+
+                    if (error) {
+                        console.error('Error deleting template:', error);
+                        alert('Error deleting template: ' + error.message);
+                    } else if (data.length === 0) {
+                        alert('No such template to delete!');
+                    } else {
+                        alert('Template "' + templateName + '" deleted successfully');
+                    }
+                }
+            }
+        }
+
+        // Event listener for saving template to Supabase
+        document.getElementById('saveTemplateToDatabase').addEventListener('click', saveTemplateToDatabase);
+
+        // Event listener for loading template from Supabase
+        document.getElementById('loadTemplateFromDatabase').addEventListener('click', loadTemplateFromDatabase);
+
+        // Event listener for deleting template from Supabase
+        document.getElementById('deleteTemplateFromDatabase').addEventListener('click', deleteTemplateFromDatabase);
+    });
+    </script>
+</body>
+</html>
