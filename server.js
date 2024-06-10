@@ -6,6 +6,8 @@ const { createCanvas, loadImage, registerFont } = require('canvas');
 const dotenv = require('dotenv');
 const request = require('request');
 const { createClient } = require('@supabase/supabase-js');
+const bodyParser = require('body-parser');
+const session = require('express-session');
 
 dotenv.config();
 
@@ -15,6 +17,22 @@ const PORT = process.env.PORT || 3000;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false } // Set to true if using HTTPS
+}));
+
+const authenticateUser = (username, password) => {
+    console.log('Comparing:', username, password, process.env.USER, process.env.PASS);
+    return username === process.env.USER && password === process.env.PASS;
+};
 
 // Middleware to parse JSON bodies
 app.use(express.json());
@@ -31,6 +49,15 @@ const registerFontDynamically = (fontFamily) => {
     }
 };
 
+// Serve login page at root if not authenticated
+app.get('/', (req, res) => {
+    if (req.session.authenticated) {
+        res.sendFile(path.join(__dirname, 'protected', 'index.html'));
+    } else {
+        res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    }
+});
+
 app.get('/env', (req, res) => {
     res.json({
         SUPABASE_URL: process.env.SUPABASE_URL,
@@ -38,9 +65,35 @@ app.get('/env', (req, res) => {
     });
 });
 
+app.post('/login', (req, res) => {
+    const { username, password } = req.body;
+    if (authenticateUser(username, password)) {
+        req.session.authenticated = true;
+        res.redirect('/');
+    } else {
+        res.redirect('/?error=Invalid%20credentials');
+    }
+});
+
+app.use('/protected', (req, res, next) => {
+    if (req.session.authenticated) {
+        next();
+    } else {
+        res.redirect('/?error=Unauthorized');
+    }
+});
+
+app.use('/protected', express.static(path.join(__dirname, 'protected')));
+
 app.get('/update-canvas', async (req, res) => {
     const queryParams = req.query;
     const templateName = queryParams.dbtemplate;
+    const apiKey = queryParams.apikey;
+
+    // Check if the API key is provided and valid
+    if (!apiKey || apiKey !== process.env.API_KEY) {
+        return res.status(401).send('Unauthorized: Invalid API key');
+    }
 
     if (Object.keys(queryParams).length === 0) {
         return res.status(400).send('No parameters provided for updating images or text');
@@ -220,4 +273,5 @@ app.get('/update-canvas', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    console.log('Environment Variables:', process.env.USER, process.env.PASS);
 });
