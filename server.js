@@ -31,6 +31,12 @@ app.use(session({
     cookie: { secure: false } // Set to true if using HTTPS
 }));
 
+
+app.post('/logout', (req, res) => {
+    req.session = null; // Destroy the session
+    res.redirect('/'); // Redirect to login page
+});
+
 const authenticateUser = (username, password) => {
     console.log('Comparing:', username, password, process.env.USER, process.env.PASS);
     return username === process.env.USER && password === process.env.PASS;
