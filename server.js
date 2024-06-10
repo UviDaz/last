@@ -7,7 +7,9 @@ const dotenv = require('dotenv');
 const request = require('request');
 const { createClient } = require('@supabase/supabase-js');
 const bodyParser = require('body-parser');
-const session = require('express-session');
+//const session = require('express-session');
+
+const session = require('cookie-session');
 
 dotenv.config();
 
