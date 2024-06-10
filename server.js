@@ -230,7 +230,7 @@ app.get('/update-canvas', async (req, res) => {
                         top: mask.top + (mask.height || mask.radius * 2) / 2
                     });
 
-                    console.log('Image properties set:', img);
+                    //console.log('Image properties set:', img);
 
                     // Create a new group with the new image and the existing mask
                     const newGroup = new fabric.Group([img], {
