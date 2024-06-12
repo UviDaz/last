@@ -112,11 +112,19 @@ app.get('/update-canvas', async (req, res) => {
 
         if (templateName) {
             // Fetch the template from Supabase
-            const { data, error } = await supabase
-                .from('templates')
-                .select('template')
-                .eq('name', templateName)
-                .single();
+           // const { data, error } = await supabase
+                //.from('templates')
+                //.select('template')
+                //.eq('name', templateName)
+               // .single();
+            console.log('Start fetching template');
+const { data, error } = await supabase
+  .from('templates')
+  .select('template')
+  .eq('name', templateName)
+  .single();
+console.log('Template fetch attempt completed');
+
 
             if (error) {
                 console.error('Error fetching template:', error);
