@@ -107,34 +107,19 @@ app.get('/update-canvas', async (req, res) => {
         return res.status(400).send('No parameters provided for updating images or text');
     }
 
-    // Delay function
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
-
-    // Introduce a 5-second delay
-    await delay(5000);
-
-    if (templateName) {
-      console.log('Fetching template:', templateName);
-
+    
 
     try {
         let templateData;
 
         if (templateName) {
             // Fetch the template from Supabase
-           // const { data, error } = await supabase
-                //.from('templates')
-                //.select('template')
-                //.eq('name', templateName)
-               // .single();
-            console.log('Start fetching template');
-const { data, error } = await supabase
-  .from('templates')
-  .select('template')
-  .eq('name', templateName)
-  .single();
-console.log('Template fetch attempt completed');
+           const { data, error } = await supabase
+                .from('templates')
+                .select('template')
+                .eq('name', templateName)
+                .single();
+            
 
 
             if (error) {
