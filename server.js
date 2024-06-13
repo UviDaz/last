@@ -283,7 +283,12 @@ app.get('/update-canvas', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    console.log('Environment Variables:', process.env.USER, process.env.PASS);
+//app.listen(PORT, () => {
+    //console.log(`Server is running on http://localhost:${PORT}`);
+    //console.log('Environment Variables:', process.env.USER, process.env.PASS);
+//});
+// Start the server on the port specified by environment variables
+const port = process.env.PORT || 3000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running on port ${port}`);
 });
